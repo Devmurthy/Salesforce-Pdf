@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salesforce Agentforce MCQ Quiz</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #ca8a04;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(120deg, #0b1020, #0f172a 60%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+    .header {
+      text-align: center;
+      margin: 16px 0 24px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .card {
+      background: rgba(17,24,39,0.85);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.08s ease, background 0.2s ease, opacity 0.2s ease;
+      text-decoration: none;
+      user-select: none;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary { background: #334155; }
+    .btn.secondary:hover { background: #1f2937; }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: var(--text); }
+    .btn.ghost:hover { background: rgba(255,255,255,0.05); }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .toggle {
+      display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+      padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+    .toggle input { width: 18px; height: 18px; }
+    .spacer { height: 10px; }
+    .quiz-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .pill { font-size: 12px; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; color: var(--muted); }
+    .progress {
+      height: 6px; width: 100%; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin: 8px 0 20px;
+    }
+    .bar { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e, #4ade80); transition: width 0.2s ease; }
+    .question { font-size: 18px; line-height: 1.55; margin-bottom: 14px; }
+    .options { display: grid; gap: 10px; }
+    .option {
+      padding: 12px 14px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: rgba(255,255,255,0.03);
+      cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.04s ease;
+    }
+    .option:hover { background: rgba(255,255,255,0.06); }
+    .option.correct { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.6); }
+    .option.incorrect { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.7); }
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 8px; }
+    .score { font-weight: 700; color: #22c55e; }
+    .footer { margin-top: 20px; text-align: center; color: var(--muted); font-size: 12px; }
+    .hidden { display: none; }
+    .study-note { font-size: 13px; color: var(--yellow); margin-bottom: 8px; }
+  </style>
+    <script>
+    // Utility
+    function shuffleInPlace(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Global state
+    const App = {
+      uniqueQuestions: [],
+      allQuestions: [],
+      dataset: 'unique', // 'unique' | 'all'
+      deck: [], // [{question, options, correct}]
+      mode: null, // 'random', 'sequence', 'infinite', 'study'
+      limit: 0, // for random
+      index: 0,
+      score: 0,
+      answered: new Set(),
+      jumble: false,
+      // For option shuffle mapping per rendered question
+      currentMap: null,
+    };
+
+    async function loadQuestions() {
+      try {
+        const [uRes, fRes] = await Promise.all([
+          fetch('questions.json', { cache: 'no-store' }),
+          fetch('questions_full.json', { cache: 'no-store' })
+        ]);
+        const uData = await uRes.json();
+        let fData = null;
+        try { fData = await fRes.json(); } catch(e) { fData = { questions: [] }; }
+        if (!uData || !Array.isArray(uData.questions)) throw new Error('Bad unique data');
+        const fullQs = Array.isArray(fData.questions) ? fData.questions : [];
+        App.uniqueQuestions = uData.questions;
+        // questions_full includes objects with 'source' and possibly duplicates; map to uniform shape
+        App.allQuestions = fullQs.map(q => ({ question: q.question, options: q.options, correct: q.correct }));
+        // Fallback: if full missing, use unique for both
+        if (!App.allQuestions.length) App.allQuestions = [...App.uniqueQuestions];
+        updateMenuLabels();
+      } catch (e) {
+        alert('Failed to load questions.json. Please run a local server in this folder.');
+        throw e;
+      }
+    }
+
+    function currentDatasetLabel() {
+      return App.dataset === 'unique' ? 'Unique' : 'All';
+    }
+
+    function getActivePool() {
+      return App.dataset === 'unique' ? App.uniqueQuestions : App.allQuestions;
+    }
+
+    function switchDataset(ds) {
+      App.dataset = ds; // 'unique' or 'all'
+      updateMenuLabels();
+    }
+
+    function toDeckRandom(n) {
+      const pool = [...getActivePool()];
+      shuffleInPlace(pool);
+      return pool.slice(0, Math.min(n, pool.length));
+    }
+    function toDeckSequence() { return [...getActivePool()]; }
+    function toDeckAll() { return [...getActivePool()]; }
+
+    function startMode(mode, limit = 0) {
+      App.mode = mode;
+      App.limit = limit;
+      App.index = 0;
+      App.score = 0;
+      App.answered = new Set();
+      App.currentMap = null;
+
+      if (mode === 'random') {
+        App.deck = toDeckRandom(limit);
+      } else if (mode === 'sequence') {
+        App.deck = toDeckSequence();
+      } else if (mode === 'infinite') {
+        App.deck = []; // generated on the fly
+      } else if (mode === 'study') {
+        App.deck = toDeckAll();
+      }
+      renderQuiz();
+      renderQuestion();
+    }
+
+    function backToMenu() {
+      document.getElementById('menu').classList.remove('hidden');
+      document.getElementById('quiz').classList.add('hidden');
+      document.getElementById('summary').classList.add('hidden');
+    }
+
+    function renderQuiz() {
+      document.getElementById('menu').classList.add('hidden');
+      document.getElementById('quiz').classList.remove('hidden');
+      document.getElementById('summary').classList.add('hidden');
+      const total = (App.mode === 'infinite') ? '∞' : (App.mode === 'random' ? App.deck.length : getActivePool().length);
+      document.getElementById('counter').textContent = `Question ${App.index + 1} of ${total}`;
+      document.getElementById('score').textContent = `Score: ${App.score}`;
+      document.getElementById('modepill').textContent = (App.mode === 'random' ? `Random ${App.limit}Q` : (App.mode === 'infinite' ? 'Infinite Random' : (App.mode === 'sequence' ? `${getActivePool().length}Q in Sequence` : 'Study MCQs'))) + ` (${currentDatasetLabel()})`;
+      document.getElementById('jumbleToggle').checked = App.jumble;
+      updateProgress();
+      document.getElementById('studyNote').classList.toggle('hidden', App.mode !== 'study');
+    }
+
+    function getCurrentQuestion() {
+      if (App.mode === 'infinite') {
+        // Generate a fresh random question each time from active pool
+        const pool = getActivePool();
+        const q = pool[Math.floor(Math.random() * pool.length)];
+        return q;
+      }
+      return App.deck[App.index];
+    }
+
+    function renderQuestion() {
+      const q = getCurrentQuestion();
+      if (!q) { return showSummary(); }
+
+      // Build option order mapping
+      const optionIndices = q.options.map((_, i) => i);
+      App.currentMap = App.jumble ? shuffleInPlace(optionIndices) : optionIndices;
+
+      const container = document.getElementById('qwrap');
+      container.innerHTML = '';
+
+      const qel = document.createElement('div');
+      qel.className = 'question';
+      qel.textContent = q.question;
+      container.appendChild(qel);
+
+      const opts = document.createElement('div');
+      opts.className = 'options';
+      App.currentMap.forEach((origIdx, i) => {
+        const opt = document.createElement('div');
+        opt.className = 'option';
+        opt.dataset.idx = String(i); // rendered idx
+        opt.textContent = `${String.fromCharCode(65 + i)}. ${q.options[origIdx]}`;
+        opt.onclick = () => onSelect(i);
+        opts.appendChild(opt);
+      });
+      container.appendChild(opts);
+
+      const total = (App.mode === 'infinite') ? '∞' : (App.mode === 'random' ? App.deck.length : getActivePool().length);
+      document.getElementById('counter').textContent = `Question ${App.index + 1} of ${total}`;
+      document.getElementById('score').textContent = `Score: ${App.score}`;
+      updateProgress();
+
+      // In study mode, reveal correct immediately
+      if (App.mode === 'study') {
+        revealCorrectOnly();
+      }
+    }
+
+    function revealCorrectOnly() {
+      const q = getCurrentQuestion();
+      const renderedCorrect = App.currentMap.indexOf(q.correct);
+      document.querySelectorAll('.option').forEach((el, idx) => {
+        if (idx === renderedCorrect) el.classList.add('correct');
+      });
+    }
+
+    function onSelect(renderedIdx) {
+      if (App.mode === 'study') return; // no scoring in study mode
+      const q = getCurrentQuestion();
+      const renderedCorrect = App.currentMap.indexOf(q.correct);
+      const optionEls = Array.from(document.querySelectorAll('.option'));
+
+      // disable further clicks
+      optionEls.forEach(el => el.style.pointerEvents = 'none');
+
+      if (renderedIdx === renderedCorrect) {
+        optionEls[renderedIdx].classList.add('correct');
+        App.score += 1;
+      } else {
+        optionEls[renderedIdx].classList.add('incorrect');
+        optionEls[renderedCorrect].classList.add('correct');
+      }
+      document.getElementById('score').textContent = `Score: ${App.score}`;
+    }
+
+    function nextQuestion() {
+      if (App.mode === 'infinite') {
+        App.index += 1; // virtual index
+        renderQuestion();
+        return;
+      }
+      if (App.mode === 'random') {
+        if (App.index >= App.deck.length - 1) { return showSummary(); }
+        App.index += 1;
+      } else {
+        if (App.index >= getActivePool().length - 1) { return showSummary(); }
+        App.index += 1;
+      }
+      renderQuestion();
+    }
+
+    function prevQuestion() {
+      if (App.index === 0) return;
+      App.index -= 1;
+      renderQuestion();
+    }
+
+    function updateProgress() {
+      const bar = document.getElementById('bar');
+      let total;
+      if (App.mode === 'infinite') {
+        total = 100; // arbitrary, show small progress animation
+        const pct = Math.min(100, ((App.index % 100) + 1));
+        bar.style.width = pct + '%';
+        return;
+      }
+      total = (App.mode === 'random') ? App.deck.length : getActivePool().length;
+      const pct = Math.max(0, Math.min(100, ((App.index + 1) / total) * 100));
+      bar.style.width = pct + '%';
+    }
+
+    function showSummary() {
+      document.getElementById('quiz').classList.add('hidden');
+      document.getElementById('summary').classList.remove('hidden');
+      document.getElementById('finalScore').textContent = `${App.score}`;
+      const total = (App.mode === 'random') ? App.deck.length : getActivePool().length;
+      document.getElementById('finalTotal').textContent = `${total}`;
+    }
+
+    function toggleJumble(chk) {
+      App.jumble = chk.checked;
+      renderQuestion();
+    }
+
+    function updateMenuLabels() {
+      const uniqueCount = App.uniqueQuestions.length;
+      const allCount = App.allQuestions.length;
+      document.getElementById('dsUnique').textContent = `Use Unique (${uniqueCount})`;
+      document.getElementById('dsAll').textContent = `Use All (${allCount})`;
+      const label = currentDatasetLabel();
+      document.getElementById('btnR10').textContent = `Random 10Q (${label})`;
+      document.getElementById('btnR25').textContent = `Random 25Q (${label})`;
+      document.getElementById('btnR50').textContent = `Random 50Q (${label})`;
+      const poolLen = getActivePool().length;
+      document.getElementById('btnRAll').textContent = `Random ${Math.min(50, poolLen)}Q (${label})`;
+      document.getElementById('btnInf').textContent = `Infinite Random (${label})`;
+      document.getElementById('btnSeq').innerHTML = `${poolLen}Q in Sequence (${label})`;
+      document.getElementById('btnStudy').textContent = `Study MCQs (${label})`;
+      document.getElementById('totalAll').textContent = poolLen;
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadQuestions();
+      updateMenuLabels();
+    });
+  </script>
+  </head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">Salesforce Agentforce MCQ Quiz</div>
+      <div class="subtitle">Shuffle each time, instant green/red feedback, prev/next. Modes inspired by reference quiz.</div>
+    </div>
+
+    <div id="menu" class="card">
+      <div class="row">
+        <span class="muted">Choose a mode</span>
+        <label class="toggle" title="Shuffle option order inside each question">
+          <input type="checkbox" id="jumbleMenu" onchange="App.jumble=this.checked">
+          <span>Jumble options</span>
+        </label>
+      </div>
+      <div class="row" style="margin-top:8px; gap:8px;">
+        <span class="muted">Dataset</span>
+        <button id="dsUnique" class="btn ghost" onclick="switchDataset('unique')">Use Unique</button>
+        <button id="dsAll" class="btn ghost" onclick="switchDataset('all')">Use All</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="menu-grid">
+        <button id="btnR10" class="btn" onclick="startMode('random', 10)">Random 10Q</button>
+        <button id="btnR25" class="btn" onclick="startMode('random', 25)">Random 25Q</button>
+        <button id="btnR50" class="btn" onclick="startMode('random', 50)">Random 50Q</button>
+        <button id="btnRAll" class="btn" onclick="startMode('random', 9999)">Random 50Q</button>
+        <button id="btnInf" class="btn secondary" onclick="startMode('infinite')">Infinite Random</button>
+        <button id="btnSeq" class="btn secondary" onclick="startMode('sequence')"><span id="totalAll">All</span>Q in Sequence</button>
+        <button id="btnStudy" class="btn ghost" onclick="startMode('study')">Study MCQs</button>
+      </div>
+    </div>
+
+    <div id="quiz" class="card hidden">
+      <div class="quiz-head">
+        <div class="row">
+          <span id="counter" class="muted">Question 1 of 10</span>
+          <span id="modepill" class="pill">Random</span>
+        </div>
+        <div class="row">
+          <label class="toggle">
+            <input type="checkbox" id="jumbleToggle" onchange="toggleJumble(this)" />
+            <span>Jumble options</span>
+          </label>
+          <button class="btn ghost" onclick="backToMenu()">Main Menu</button>
+        </div>
+      </div>
+      <div class="progress"><div id="bar" class="bar"></div></div>
+      <div id="studyNote" class="study-note hidden">Study mode: correct option is highlighted; selections are disabled.</div>
+      <div id="qwrap"></div>
+      <div class="nav">
+        <button class="btn secondary" onclick="prevQuestion()">Previous</button>
+        <div class="score" id="score">Score: 0</div>
+        <button class="btn" onclick="nextQuestion()">Next</button>
+      </div>
+    </div>
+
+    <div id="summary" class="card hidden">
+      <div style="font-size:18px; font-weight:700; margin-bottom:6px;">Your Score</div>
+      <div class="muted" style="margin-bottom:10px;">You scored <span id="finalScore">0</span> out of <span id="finalTotal">0</span>.</div>
+      <div class="row">
+        <button class="btn" onclick="startMode(App.mode, App.limit)">Retry same mode</button>
+        <button class="btn secondary" onclick="backToMenu()">Back to Main Menu</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
