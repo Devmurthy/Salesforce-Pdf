@@ -144,7 +144,7 @@
         "Assign Data Categories to Knowledge articles, and define Data Category filters in the Agentforce Data Library.",
         "Define scope instructions to the agent specifying a list of allowed article titles or IDs."
       ],
-      "correct": 0,
+      "correct": 1,
       "source": "docx"
     },
     {
