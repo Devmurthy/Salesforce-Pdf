@@ -137,7 +137,7 @@
         "Assign Data Categories to Knowledge articles, and define Data Category filters in the Agentforce Data Library.",
         "Define scope instructions to the agent specifying a list of allowed article titles or IDs."
       ],
-      "correct": 1,
+      "correct": 0,
       "source": "docx"
     },
     {
@@ -177,7 +177,7 @@
         "Create a field set for all the fields to be grounded.",
         "Configure page layout of the master record type."
       ],
-      "correct": 1,
+      "correct": 2,
       "source": "docx"
     },
     {
@@ -227,7 +227,7 @@
         "Determine a user’s topic access and sort actions by priority to be executed.",
         "Find similar requested topics and provide the actions that need to be executed."
       ],
-      "correct": 2,
+      "correct": 1,
       "source": "docx"
     },
     {
@@ -277,7 +277,7 @@
         "Enable Einstein Conversation Insights, connect a recording provider, assign permission sets, and customize insights with up to 25 products.",
         "Enable Einstein Conversation Insights, assign permission sets, define recording managers, and customize insights with up to 50 competitor names."
       ],
-      "correct": 1,
+      "correct": 0,
       "source": "docx"
     },
     {
@@ -287,7 +287,7 @@
         "Grounding data from external websites to augment a prompt with RAG.",
         "Returning relevant data from the vector database to augment a prompt."
       ],
-      "correct": 1,
+      "correct": 0,
       "source": "docx"
     },
     {
@@ -317,7 +317,7 @@
         "Create a Flex template to add resources with standard and custom objects as inputs.",
         "Create a prompt template passing in a special custom object that connects the records temporarily."
       ],
-      "correct": 0,
+      "correct": 1,
       "source": "docx"
     },
     {
@@ -357,7 +357,7 @@
         "Matched opportunities have a status of Closed Won from last 12 months.",
         "Matched opportunities were created in the last 12 months."
       ],
-      "correct": 1,
+      "correct": 2,
       "source": "docx"
     },
     {
@@ -487,7 +487,7 @@
         "Select the latest Opportunities related list as a merge field.",
         "Create a flow to retrieve the opportunity information."
       ],
-      "correct": 2,
+      "correct": 1,
       "source": "docx"
     },
     {
