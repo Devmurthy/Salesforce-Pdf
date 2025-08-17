@@ -1,0 +1,19 @@
+# Jekyll configuration for GitHub Pages
+title: Salesforce AgentForce MCQ Quiz
+description: Interactive quiz application for Salesforce AgentForce certification preparation
+baseurl: ""
+url: "https://devmurthy.github.io/Salesforce-Pdf"
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+
+# Exclude files from processing
+exclude:
+  - .github
+  - .git
+  - node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
